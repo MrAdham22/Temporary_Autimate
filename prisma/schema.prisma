@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          String    @default("user") // can be "user", "parent", "admin"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  gameProgress  GameProgress[]
+  children      Child[]   // For parent accounts
+}
+
+model Child {
+  id            String    @id @default(cuid())
+  name          String
+  dateOfBirth   DateTime
+  parentId      String
+  parent        User      @relation(fields: [parentId], references: [id])
+  gameProgress  GameProgress[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model GameProgress {
+  id            String    @id @default(cuid())
+  gameId        String    // e.g., "emotions", "patterns", etc.
+  score         Int       @default(0)
+  level         Int       @default(1)
+  userId        String?
+  childId       String?
+  user          User?     @relation(fields: [userId], references: [id])
+  child         Child?    @relation(fields: [childId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([childId])
+}
